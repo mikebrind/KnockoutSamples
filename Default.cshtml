@@ -1,0 +1,104 @@
+﻿@{
+    Page.Title = "Knockout Sample";
+}
+@section script{
+<script type="text/javascript">
+    var viewModel;
+    $(function() {
+        viewModel = {
+            productId: ko.observable(),
+            productName: ko.observable(),
+            contactTitle: ko.observable(),
+            contactName: ko.observable(),
+            companyName: ko.observable(),
+            quantityPerUnit: ko.observable(),
+            unitPrice: ko.observable(),
+            unitsInStock: ko.observable(),
+            categories: ko.observableArray([]),
+            products: ko.observableArray([])
+        };
+        viewModel.buy = function(){
+            if(this.unitsInStock() > 0){
+                this.unitsInStock(this.unitsInStock() - 1);
+            } else {
+                alert('Out of stock!');
+            }
+        };
+        ko.applyBindings(viewModel);
+
+        $.getJSON('/JsonService/GetCategories', function(data) {
+            viewModel.categories(data);
+        });
+
+        $('#categories').change(function() {
+            $.getJSON('/JsonService/GetProductsByCategory/' + $(this).val(), function(data) {
+                viewModel.products(data);
+            });
+        });
+
+        $('tr').live('hover', function() {
+            $(this).css('cursor', 'pointer');
+        }).live('click', function() {
+            $.getJSON('/JsonService/GetProductById/' + $(this).find('td:first').text(), function(data) {
+                var product = data[0];
+                viewModel.productName(product.ProductName);
+                viewModel.contactTitle(product.ContactTitle);
+                viewModel.contactName(product.ContactName);
+                viewModel.companyName(product.CompanyName);
+                viewModel.unitPrice('£' + product.UnitPrice.toFixed(2));
+                viewModel.quantityPerUnit(product.QuantityPerUnit);
+                viewModel.unitsInStock(product.UnitsInStock);
+            });
+        });
+    });
+    
+</script>
+}
+<div id="products">
+    <h3></h3>
+    <select id="categories" data-bind="options: viewModel.categories, optionsText: 'CategoryName', optionsValue: 'CategoryID', optionsCaption: 'Choose...'"  ></select>
+    <table> 
+        <tbody data-bind="foreach: viewModel.products"> 
+            <tr> 
+                <td><span data-bind="text:ProductID"></span></td> 
+                <td><span data-bind="text:ProductName"></span></td> 
+            </tr> 
+        </tbody> 
+    </table>
+</div>
+
+<div id="details">
+    <h3>Details</h3>
+    <div class="row">
+        <span class="label">Product:</span>
+        <span data-bind="text: productName"></span>
+    </div>
+    <div class="row">
+        <span class="label">Supplier:</span>
+        <span data-bind="text: companyName"></span>
+    </div>
+    <div class="row">
+        <span class="label">Contact:</span>
+        <span data-bind="text: contactName"></span>
+    </div>
+    <div class="row">
+        <span class="label">Position:</span>
+        <span data-bind="text: contactTitle"></span>
+    </div>
+    <div class="row">
+        <span class="label">Unit Price:</span>
+        <span data-bind="text: unitPrice"></span>
+    </div>
+    <div class="row">
+        <span class="label">Quantity Per Unit:</span>
+        <span data-bind="text: quantityPerUnit"></span>
+    </div>
+    <div class="row">
+        <span class="label">Units In Stock:</span>
+        <span data-bind="text: unitsInStock"></span>
+    </div>
+    <div class="row">
+        <span class="label">&nbsp;</span>
+        <span><button data-bind="click: buy">Buy One</button></span>
+    </div>
+</div>
